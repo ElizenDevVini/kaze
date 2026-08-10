@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kaze</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23b0402e'/></svg>">
+  <style>
+    :root { --fg: #f2e8d8; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; background: #1a120c; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    #ui {
+      position: fixed; inset: 0; pointer-events: none;
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+      color: var(--fg);
+    }
+    #title {
+      position: absolute; top: 28px; left: 36px;
+      font-size: 28px; letter-spacing: 0.35em;
+      text-shadow: 0 1px 12px rgba(0,0,0,0.5);
+    }
+    #title small { display: block; font-size: 12px; letter-spacing: 0.2em; opacity: 0.75; margin-top: 6px; }
+    #hint {
+      position: absolute; bottom: 26px; width: 100%; text-align: center;
+      font-size: 13px; letter-spacing: 0.15em; opacity: 0.8;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+      transition: opacity 1s;
+    }
+    #cuts {
+      position: absolute; top: 34px; right: 40px;
+      font-size: 15px; letter-spacing: 0.2em; opacity: 0.85;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+    }
+    #loading {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: #1a120c; color: var(--fg); font-size: 14px; letter-spacing: 0.3em;
+      transition: opacity 1.2s; z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <div id="title">風 kaze<small>a field, a sword, the wind</small></div>
+    <div id="cuts"></div>
+    <div id="hint">click to take up the sword — wasd move · shift run · click slash</div>
+    <div id="loading">kaze</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

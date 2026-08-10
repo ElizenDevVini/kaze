@@ -1,0 +1,8 @@
+id,role,type,description,size/ratio,style line ref,source
+samurai_concept,character concept,image,ronin samurai T-pose white bg,1:1,formula v1,higgsfield gpt_image_2
+samurai_glb,player character,3d,rigged+textured 5 clips (idle/walk/run/slash1/slash2),20k tris,formula v1,higgsfield image_to_3d + 3d_rigging
+wind,ambience loop,audio,wind through dry grass field,~loop,-,higgsfield seed_audio
+music,music loop,audio,shakuhachi and koto ambient,60s,-,higgsfield sonilo_music
+slash,sfx,audio,katana whoosh,short,-,higgsfield seed_audio
+cut,sfx,audio,blade through bamboo,short,-,higgsfield seed_audio
+draw,sfx,audio,katana drawn from scabbard,short,-,higgsfield seed_audio
