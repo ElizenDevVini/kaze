@@ -4,6 +4,8 @@ import { createGrass } from './grass.js'
 import { createSky } from './sky.js'
 import { createPetals, createClippings } from './effects.js'
 import { createBamboo } from './bamboo.js'
+import { createBlood, createSlashArc } from './blood.js'
+import { createEnemies } from './enemies.js'
 import { createPlayer } from './player.js'
 import { startAudio, play } from './audio.js'
 import { groundHeight } from './terrain.js'
@@ -58,10 +60,49 @@ function torii() {
 }
 scene.add(torii())
 
+const blood = createBlood(scene)
+const slashArc = createSlashArc(scene)
+
 let cutTotal = 0
+let kills = 0
+let hp = 3
+let dead = false
+let timeScale = 1
 const cutsEl = document.getElementById('cuts')
 const hintEl = document.getElementById('hint')
 const loadingEl = document.getElementById('loading')
+const damageEl = document.getElementById('damage')
+const fadeEl = document.getElementById('fade')
+
+function updateCounter() {
+  const parts = []
+  if (cutTotal > 0) parts.push(`${cutTotal} blades`)
+  if (kills > 0) parts.push(`${kills} fallen`)
+  cutsEl.textContent = parts.join(' · ')
+}
+
+const enemies = createEnemies(scene, {
+  onPlayerHit() {
+    if (dead) return
+    hp -= 1
+    damageEl.style.opacity = Math.min(1, 0.35 + (3 - hp) * 0.25)
+    play('cut')
+    setTimeout(() => { if (hp > 0) damageEl.style.opacity = Math.max(0, (3 - hp) * 0.12) }, 500)
+    if (hp <= 0) {
+      dead = true
+      fadeEl.style.opacity = 1
+      setTimeout(() => {
+        player.reset()
+        enemies.reset()
+        hp = 3
+        dead = false
+        damageEl.style.opacity = 0
+        fadeEl.style.opacity = 0
+      }, 2600)
+    }
+  },
+  onCorpseSettled() {}
+})
 
 const player = createPlayer(scene, camera, {
   onModelReady() {
@@ -72,12 +113,24 @@ const player = createPlayer(scene, camera, {
     play('slash')
   },
   onStrike(origin, facing) {
+    if (dead) return
+    slashArc.flash(origin, facing)
+    const duels = enemies.slash(origin, facing, clock.elapsedTime)
+    for (const d of duels) {
+      blood.burst(d.position, d.dir, d.killed)
+      if (d.killed) {
+        kills += 1
+        grass.stain(d.position.x, d.position.z)
+        play('taiko')
+        timeScale = 0.22 // one slow breath as they fall
+      }
+    }
     const res = grass.slash(origin, facing, clock.elapsedTime)
     const stalks = bamboo.slash(origin, facing, clock.elapsedTime)
     if (res.cut > 0) clippings.burst(res.positions)
-    if (res.cut > 0 || stalks > 0) play('cut')
+    if ((res.cut > 0 || stalks > 0) && duels.length === 0) play('cut')
     cutTotal += res.cut
-    cutsEl.textContent = cutTotal > 0 ? `${cutTotal} blades` : ''
+    updateCounter()
   }
 })
 
@@ -100,16 +153,21 @@ function resize() {
 addEventListener('resize', resize)
 resize()
 
-if (import.meta.env.DEV) window.__kaze = { scene, camera, player, grass, bamboo }
+if (import.meta.env.DEV) window.__kaze = { scene, camera, player, grass, bamboo, enemies }
 
 const clock = new THREE.Clock()
 renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), 0.05)
+  const raw = Math.min(clock.getDelta(), 0.05)
+  timeScale += (1 - timeScale) * Math.min(1, raw * 2.6)
+  const dt = raw * timeScale
   const t = clock.elapsedTime
   player.update(dt, t)
+  enemies.update(dt, t, player.position)
   grass.update(dt, t, player.position, camera.position)
   petals.update(dt, t, player.position)
   clippings.update(dt)
+  blood.update(dt)
+  slashArc.update(raw)
   bamboo.update(dt, t)
   renderer.render(scene, camera)
 })

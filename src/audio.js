@@ -5,7 +5,8 @@ const PATHS = {
   music: './assets/audio/music.mp3',
   slash: './assets/audio/slash.mp3',
   cut: './assets/audio/cut.mp3',
-  draw: './assets/audio/draw.mp3'
+  draw: './assets/audio/draw.mp3',
+  taiko: './assets/audio/taiko.mp3'
 }
 
 const clips = {}
@@ -27,6 +28,7 @@ export function startAudio() {
   load('music', { loop: true, volume: 0.3 })?.play().catch(() => {})
   load('slash', { volume: 0.5 })
   load('cut', { volume: 0.55 })
+  load('taiko', { volume: 0.65 })
   const draw = load('draw', { volume: 0.5 })
   draw?.play().catch(() => {})
 }

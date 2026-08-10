@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { groundHeight, FIELD } from './terrain.js'
+import { makeKatana, attachKatana } from './katana.js'
 
 const WALK = 2.4
 const RUN = 5.6
@@ -37,23 +38,7 @@ export function createPlayer(scene, camera, callbacks) {
   root.add(shadow)
 
   // procedural katana, attached to the model's hand bone once it loads
-  const katana = new THREE.Group()
-  const blade = new THREE.Mesh(
-    new THREE.BoxGeometry(0.016, 0.74, 0.035),
-    new THREE.MeshStandardMaterial({ color: '#c9cfd8', metalness: 0.35, roughness: 0.3 })
-  )
-  blade.position.y = 0.47
-  const guard = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.05, 0.012, 12),
-    new THREE.MeshStandardMaterial({ color: '#3a2e1a', metalness: 0.4, roughness: 0.6 })
-  )
-  guard.position.y = 0.1
-  const grip = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.021, 0.023, 0.24, 8),
-    new THREE.MeshLambertMaterial({ color: '#1d1a2a' })
-  )
-  grip.position.y = -0.02
-  katana.add(blade, guard, grip)
+  const katana = makeKatana()
 
   let mixer = null
   let actions = {}
@@ -74,13 +59,9 @@ export function createPlayer(scene, camera, callbacks) {
   }
 
   new GLTFLoader().load('./assets/samurai.glb', gltf => {
+    // the rig is generated at real-world height; skinned-mesh bounding boxes
+    // lie about size (bind matrices cancel the armature scale), so trust it
     const model = gltf.scene
-    // normalize to ~1.7m tall regardless of export scale
-    const box = new THREE.Box3().setFromObject(model)
-    const size = box.getSize(new THREE.Vector3())
-    const s = 1.7 / Math.max(size.y, 0.001)
-    model.scale.setScalar(s)
-    model.position.y = -box.min.y * s
     model.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material.side = THREE.DoubleSide } })
     root.remove(placeholder)
     root.add(model)
@@ -99,21 +80,7 @@ export function createPlayer(scene, camera, callbacks) {
     }
     if (actions.idle) { actions.idle.play(); active = actions.idle }
 
-    // hand the katana to the right hand if the rig exposes one
-    let hand = null
-    model.traverse(o => {
-      if (o.isBone && /hand.*r|right.*hand|r_hand|mixamorigRightHand/i.test(o.name) && !hand) hand = o
-    })
-    if (hand) {
-      // the armature node carries a tiny scale (Meshy exports at 0.01);
-      // undo the ACCUMULATED world scale so the sword keeps its real size
-      const ws = new THREE.Vector3()
-      hand.getWorldScale(ws)
-      katana.scale.setScalar(1 / ws.x)
-      katana.rotation.set(0, 0, -Math.PI / 2)
-      katana.position.set(0, 0.06, 0.02).divideScalar(ws.x)
-      hand.add(katana)
-    } else {
+    if (!attachKatana(model, katana)) {
       katana.position.set(0.3, 0.9, 0.1)
       katana.rotation.z = -0.4
       root.add(katana)
@@ -221,5 +188,12 @@ export function createPlayer(scene, camera, callbacks) {
     camera.lookAt(root.position.x, root.position.y + 1.5, root.position.z)
   }
 
-  return { root, update, trySlash, get position() { return root.position } }
+  function reset() {
+    root.position.set(0, groundHeight(0, 0), 4)
+    speed = 0
+    slashTimer = -1
+    if (actions.idle) fadeTo('idle', 0.01)
+  }
+
+  return { root, update, trySlash, reset, get position() { return root.position } }
 }

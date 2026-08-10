@@ -11,6 +11,7 @@ attribute vec2 aShape;   // width, height
 attribute float aPhase;
 attribute float aTint;
 attribute float aCut;
+attribute float aBlood;
 
 uniform float uTime;
 uniform vec2 uWind;      // direction * strength
@@ -22,6 +23,7 @@ varying float vTint;
 varying float vSheen;
 varying float vCut;
 varying float vShade;    // per-blade lightness jitter
+varying float vBlood;
 
 // cheap 2d noise for gust fields
 float hash21(vec2 p) {
@@ -41,6 +43,7 @@ void main() {
   vTint = aTint;
   vCut = aCut;
   vShade = 0.8 + 0.4 * fract(aPhase * 7.31);
+  vBlood = aBlood;
 
   // blades crouch near the camera so the foreground doesn't fill with
   // screen-sized triangles
@@ -96,12 +99,14 @@ uniform vec3 uRoot;
 uniform vec3 uMid;
 uniform vec3 uTip;
 uniform vec3 uRust;
+uniform vec3 uBlood;
 
 varying float vHeight;
 varying float vTint;
 varying float vSheen;
 varying float vCut;
 varying float vShade;
+varying float vBlood;
 
 void main() {
   vec3 col = vHeight < 0.5
@@ -111,6 +116,7 @@ void main() {
   col *= vShade;
   col *= 0.85 + 0.5 * vSheen * vHeight;      // traveling light bands
   col = mix(col, uRoot * 0.7, vCut * 0.5);   // fresh-cut stubble darkens
+  col = mix(col, uBlood, vBlood * 0.9);      // where the fallen fell, the field stays red
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -144,6 +150,7 @@ export function createGrass() {
   const phases = new Float32Array(BLADES)
   const tints = new Float32Array(BLADES)
   const cuts = new Float32Array(BLADES)
+  const bloods = new Float32Array(BLADES)
 
   const half = FIELD / 2 - 4
   for (let i = 0; i < BLADES; i++) {
@@ -169,6 +176,9 @@ export function createGrass() {
   const cutAttr = new THREE.InstancedBufferAttribute(cuts, 1)
   cutAttr.setUsage(THREE.DynamicDrawUsage)
   geo.setAttribute('aCut', cutAttr)
+  const bloodAttr = new THREE.InstancedBufferAttribute(bloods, 1)
+  bloodAttr.setUsage(THREE.DynamicDrawUsage)
+  geo.setAttribute('aBlood', bloodAttr)
 
   const material = new THREE.ShaderMaterial({
     vertexShader: VERT,
@@ -181,7 +191,8 @@ export function createGrass() {
       uRoot: { value: new THREE.Color('#453317') },
       uMid: { value: new THREE.Color('#a8842f') },
       uTip: { value: new THREE.Color('#e6c463') },
-      uRust: { value: new THREE.Color('#b05a2a') }
+      uRust: { value: new THREE.Color('#b05a2a') },
+      uBlood: { value: new THREE.Color('#8a1b15') }
     },
     side: THREE.DoubleSide
   })
@@ -228,5 +239,19 @@ export function createGrass() {
     return { cut, positions }
   }
 
-  return { mesh, update, slash }
+  // permanently stain blades around a fallen enemy; the field remembers
+  function stain(x, z, radius = 2.2) {
+    const r2 = radius * radius
+    for (let i = 0; i < BLADES; i++) {
+      const dx = offsets[i * 3] - x
+      const dz = offsets[i * 3 + 2] - z
+      const d2 = dx * dx + dz * dz
+      if (d2 > r2) continue
+      const fall = 1 - Math.sqrt(d2) / radius
+      bloods[i] = Math.min(1, Math.max(bloods[i], fall * (0.5 + Math.random() * 0.5)))
+    }
+    bloodAttr.needsUpdate = true
+  }
+
+  return { mesh, update, slash, stain }
 }
