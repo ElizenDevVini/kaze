@@ -6,3 +6,6 @@ music,music loop,audio,shakuhachi and koto ambient,60s,-,higgsfield sonilo_music
 slash,sfx,audio,katana whoosh,short,-,higgsfield seed_audio
 cut,sfx,audio,blade through bamboo,short,-,higgsfield seed_audio
 draw,sfx,audio,katana drawn from scabbard,short,-,higgsfield seed_audio
+enemy_concept,character concept,image,rival ronin crimson/black T-pose white bg,1:1,formula v1,higgsfield gpt_image_2
+enemy_glb,rival character,3d,rigged+textured 4 clips (idle/walk/attack/death),15k tris,formula v1,higgsfield image_to_3d + 3d_rigging
+taiko,sfx,audio,deep taiko drum hit for kills,short,-,higgsfield seed_audio

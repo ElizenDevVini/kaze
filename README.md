@@ -6,6 +6,8 @@ The grass is the point: 150,000 GPU-instanced blades with analytic wind (broad t
 
 The samurai is a generated asset: concept image to rigged, textured GLB with five animation clips (idle, walk, run, two slashes) through the Higgsfield pipeline, merged into one model. The katana is procedural, parented to the rig's hand bone. Wind, music, and sword sounds are generated audio.
 
+Rival ronin roam the field — a second generated character with walk, attack, and death clips. They chase, wind up, and strike; two cuts fell one. Blood is stylized, not gory: a burst of crimson droplets and an ink-splash bloom, a taiko hit, one slow breath of time as they fall, and a permanent red stain in the grass where they fell. The field keeps a map of every duel. Take three hits and the field claims you instead.
+
 ## Controls
 
 - click: take up the sword (pointer lock)
